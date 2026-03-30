@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>che, charlamos? — карточки</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --blue: #4A7FE8;
+    --blue-dark: #2F60CC;
+    --yellow: #F9CF5A;
+    --white: #ffffff;
+    --offwhite: #F4F2FF;
+    --charcoal: #1A1A2E;
+    --mid: #6B6B8A;
+    --light: #B0AECF;
+    --border: #E2DEFF;
+  }
+
+  body {
+    font-family: 'Nunito Sans', sans-serif;
+    background: #ffffff;
+    color: var(--charcoal);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  nav {
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px 32px;
+    background: var(--white);
+    border-bottom: 2px solid var(--border);
+    box-shadow: 0 2px 16px rgba(74,127,232,0.07);
+  }
+  .nav-logo {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900; font-size: 16px;
+    color: var(--charcoal);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .nav-logo-badge {
+    background: var(--blue); color: white;
+    padding: 4px 12px; border-radius: 100px;
+    font-size: 14px; font-weight: 900;
+  }
+  .nav-logo-sub { color: var(--light); font-weight: 600; font-size: 13px; }
+
+  .student-page { max-width: 600px; margin: 0 auto; padding: 48px 24px 80px; }
+
+  .page-title { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 30px; margin-bottom: 4px; }
+  .page-subtitle { color: var(--mid); font-size: 15px; margin-bottom: 28px; }
+
+  .deck-list { display: flex; flex-direction: column; gap: 10px; }
+  .deck-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px; border-radius: 16px;
+    background: var(--white); border: 3px solid var(--border);
+    cursor: pointer; transition: all 0.2s;
+  }
+  .deck-item:hover { border-color: var(--blue); transform: translateX(5px); }
+  .deck-item.selected { border-color: var(--blue); background: rgba(74,127,232,0.05); transform: translateX(5px); }
+  .deck-item-left { display: flex; align-items: center; gap: 12px; }
+  .deck-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--border); flex-shrink: 0; transition: background 0.2s; }
+  .deck-item.selected .deck-dot { background: var(--blue); }
+  .deck-item-name { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 15px; }
+  .deck-item-count { font-size: 12px; color: var(--light); background: var(--offwhite); padding: 3px 10px; border-radius: 100px; font-weight: 700; }
+
+  .btn-start {
+    width: 100%; padding: 16px; border-radius: 16px;
+    border: 3px solid var(--blue-dark);
+    background: var(--blue); color: white;
+    font-family: 'Nunito', sans-serif; font-size: 17px; font-weight: 900;
+    cursor: pointer; transition: all 0.2s; margin-top: 20px;
+    box-shadow: 0 6px 20px rgba(74,127,232,0.35);
+  }
+  .btn-start:hover { background: var(--blue-dark); transform: translateY(-2px); }
+  .btn-start:disabled { background: var(--border); color: var(--light); border-color: var(--border); cursor: not-allowed; transform: none; box-shadow: none; }
+
+  .flashcard-area { display: none; }
+  .flashcard-area.active { display: block; }
+
+  .progress-bar-wrap { height: 6px; background: var(--border); border-radius: 6px; margin-bottom: 32px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--blue), #9B6FD8); border-radius: 6px; transition: width 0.4s ease; }
+
+  .card-counter { text-align: center; font-size: 13px; color: var(--light); margin-bottom: 16px; font-weight: 700; font-family: 'Nunito', sans-serif; letter-spacing: 1px; }
+
+  .card-scene { width: 100%; height: 260px; cursor: pointer; margin-bottom: 28px; position: relative; }
+
+  .card-face {
+    position: absolute; inset: 0; border-radius: 24px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 40px 32px;
+    transition: opacity 0.28s ease, transform 0.28s ease;
+  }
+  .card-front {
+    background: var(--white); border: 2px solid var(--border);
+    box-shadow: 0 8px 32px rgba(74,127,232,0.1);
+    opacity: 1; transform: translateY(0); z-index: 2;
+  }
+  .card-back {
+    background: var(--blue); box-shadow: 0 8px 32px rgba(74,127,232,0.4);
+    opacity: 0; transform: translateY(14px); z-index: 1;
+  }
+  .card-scene.flipped .card-front { opacity: 0; transform: translateY(-14px); z-index: 1; }
+  .card-scene.flipped .card-back  { opacity: 1; transform: translateY(0);     z-index: 2; }
+
+  .card-front::before {
+    content: ''; position: absolute; top: -12px; right: 22px;
+    width: 26px; height: 26px; background: var(--yellow);
+    border-radius: 50% 50% 50% 10%; transform: rotate(-20deg);
+  }
+  .card-back::after {
+    content: ''; position: absolute; bottom: -10px; left: 26px;
+    width: 22px; height: 22px; background: var(--yellow);
+    border-radius: 50% 10% 50% 50%; transform: rotate(15deg);
+  }
+
+  .card-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; font-weight: 800; font-family: 'Nunito', sans-serif; }
+  .card-front .card-label { color: var(--light); }
+  .card-back .card-label { color: rgba(255,255,255,0.6); }
+
+  .card-word { font-family: 'Nunito', sans-serif; font-weight: 900; text-align: center; line-height: 1.15; font-size: 44px; }
+  .card-front .card-word { color: var(--charcoal); }
+  .card-back .card-word { color: white; font-size: 40px; }
+  .card-hint { margin-top: 12px; font-size: 13px; color: rgba(255,255,255,0.5); text-align: center; }
+  .card-tap-hint { position: absolute; bottom: 18px; font-size: 12px; font-weight: 700; font-family: 'Nunito', sans-serif; letter-spacing: 0.5px; }
+  .card-front .card-tap-hint { color: var(--light); }
+  .card-back .card-tap-hint  { color: rgba(255,255,255,0.4); }
+
+  .card-nav { display: flex; gap: 12px; }
+  .btn-nav {
+    flex: 1; padding: 14px 20px; border-radius: 14px;
+    border: 3px solid var(--blue); background: var(--white);
+    font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 800;
+    color: var(--blue); cursor: pointer; transition: all 0.2s;
+  }
+  .btn-nav:hover { background: var(--blue); color: white; }
+  .btn-nav.primary { background: var(--charcoal); border-color: var(--charcoal); color: white; box-shadow: 0 4px 14px rgba(26,26,46,0.2); }
+  .btn-nav.primary:hover { background: var(--blue); border-color: var(--blue); }
+
+  .finish-screen { display: none; text-align: center; padding: 60px 20px; }
+  .finish-screen.active { display: block; }
+  .finish-emoji { font-size: 64px; margin-bottom: 16px; }
+  .finish-screen h3 { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 28px; margin-bottom: 8px; }
+  .finish-screen p { color: var(--mid); margin-bottom: 32px; font-size: 15px; }
+  .btn-restart {
+    padding: 14px 36px; border-radius: 14px;
+    background: var(--blue); color: white;
+    border: 3px solid var(--blue-dark);
+    font-family: 'Nunito', sans-serif; font-size: 16px; font-weight: 900;
+    cursor: pointer; transition: all 0.2s; box-shadow: 0 6px 20px rgba(74,127,232,0.35);
+  }
+  .btn-restart:hover { background: var(--blue-dark); }
+
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--light); font-size: 15px; font-weight: 600; line-height: 1.6; }
+  .empty-state span { display: block; font-size: 40px; margin-bottom: 12px; }
+
+  @media (max-width: 500px) {
+    nav { padding: 14px 16px; }
+    .student-page { padding: 32px 16px 60px; }
+    .card-word { font-size: 30px !important; }
+    .card-scene { height: 220px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">
+    <span class="nav-logo-badge">che,</span>
+    charlamos?
+    <span class="nav-logo-sub">· tarjetas</span>
+  </div>
+</nav>
+
+<div class="student-page">
+
+  <div id="deckSelector">
+    <h2 class="page-title">Слова с charlas 💙</h2>
+    <p class="page-subtitle">Выбери набор и переворачивай карточки, чтобы увидеть перевод</p>
+    <div id="deckList" class="deck-list"></div>
+    <button class="btn-start" id="btnStart" onclick="startStudy()" disabled>¡Vamos! →</button>
+  </div>
+
+  <div id="flashcardArea" class="flashcard-area">
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
+    </div>
+    <div class="card-counter" id="cardCounter">1 / 1</div>
+
+    <div class="card-scene" id="cardScene" onclick="flipCard()">
+      <div class="card-face card-front">
+        <div class="card-label">Испанский</div>
+        <div class="card-word" id="wordFront">—</div>
+        <div class="card-tap-hint">нажми, чтобы увидеть перевод</div>
+      </div>
+      <div class="card-face card-back">
+        <div class="card-label">Русский</div>
+        <div class="card-word" id="wordBack">—</div>
+        <div id="wordHint" class="card-hint"></div>
+        <div class="card-tap-hint">нажми ещё раз</div>
+      </div>
+    </div>
+
+    <div class="card-nav">
+      <button class="btn-nav" onclick="prevCard()">← Назад</button>
+      <button class="btn-nav primary" id="btnNext" onclick="nextCard()">Дальше →</button>
+    </div>
+  </div>
+
+  <div id="finishScreen" class="finish-screen">
+    <div class="finish-emoji">🎉</div>
+    <h3>¡Perfecto!</h3>
+    <p id="finishDeckName"></p>
+    <button class="btn-restart" onclick="restartStudy()">Повторить ещё раз</button>
+    <br><br>
+    <button class="btn-nav" style="display:inline-block;max-width:220px;margin:0 auto;" onclick="backToDecks()">← К наборам</button>
+  </div>
+
+</div>
+
+<script>
+let decks = [], selectedDeckIdx = null, currentCards = [], currentIdx = 0, isFlipped = false;
+
+function loadDecks() {
+  try {
+    const d = localStorage.getItem('charlamos_decks');
+    if (d) decks = JSON.parse(d);
+  } catch(e) { decks = []; }
+
+  // Built-in decks always available
+  const builtIn = [
+    {
+      name: 'Charla 6 — Shakira! Shakira!',
+      cards: [
+        { es: 'salí pa\' despejarme', ru: 'я вышла, чтобы отвлечься' },
+        { es: 'estar apagado/a', ru: 'быть вялым / уставшим' },
+        { es: 'no tener nada que perder', ru: 'нечего терять' },
+        { es: 'tener derecho de', ru: 'иметь право на что-то' },
+        { es: 'portarse mal', ru: 'вести себя плохо' },
+        { es: 'pa\' pasarla bien', ru: 'чтобы хорошо провести время' },
+        { es: 'estar suelto/a', ru: 'быть свободным / свободной' },
+        { es: 'ahora puedo hacer lo que quiera', ru: 'сейчас я могу делать то, что хочу' },
+        { es: 'nadie va decirme cómo comportarme', ru: 'никто не скажет мне, как себя вести' },
+        { es: 'ponerse poca ropa', ru: 'надеть мало одежды' },
+        { es: 'pasarse rico', ru: 'приятно / хорошо провести время' },
+      ]
+    }
+  ];
+  // Merge: built-in first, then teacher-added (avoid duplicates by name)
+  const teacherDecks = decks.filter(d => !builtIn.some(b => b.name === d.name));
+  decks = [...builtIn, ...teacherDecks];
+}
+
+function renderDeckList() {
+  const list = document.getElementById('deckList');
+  if (!decks.length) {
+    list.innerHTML = '<div class="empty-state"><span>📭</span>Наборов пока нет.<br>Учитель ещё не добавил слова.</div>';
+    document.getElementById('btnStart').disabled = true; return;
+  }
+  list.innerHTML = decks.map((d, i) => `
+    <div class="deck-item ${selectedDeckIdx===i?'selected':''}" onclick="selectDeck(${i})">
+      <div class="deck-item-left"><div class="deck-dot"></div><span class="deck-item-name">${d.name}</span></div>
+      <span class="deck-item-count">${d.cards.length} слов</span>
+    </div>`).join('');
+  document.getElementById('btnStart').disabled = selectedDeckIdx === null;
+}
+
+function selectDeck(i) { selectedDeckIdx = i; renderDeckList(); }
+
+function startStudy() {
+  if (selectedDeckIdx === null) return;
+  currentCards = [...decks[selectedDeckIdx].cards];
+  currentIdx = 0; isFlipped = false;
+  document.getElementById('deckSelector').style.display = 'none';
+  document.getElementById('finishScreen').classList.remove('active');
+  document.getElementById('flashcardArea').classList.add('active');
+  showCard();
+}
+
+function showCard() {
+  const card = currentCards[currentIdx], total = currentCards.length;
+  document.getElementById('wordFront').textContent = card.es;
+  document.getElementById('wordBack').textContent = card.ru;
+  document.getElementById('wordHint').textContent = card.hint || '';
+  document.getElementById('cardCounter').textContent = `${currentIdx + 1} / ${total}`;
+  document.getElementById('progressFill').style.width = `${(currentIdx / total) * 100}%`;
+  document.getElementById('btnNext').textContent = currentIdx === total - 1 ? '¡Listo! ✓' : 'Дальше →';
+  const scene = document.getElementById('cardScene');
+  scene.classList.remove('flipped'); isFlipped = false;
+  scene.style.opacity = '0'; scene.style.transform = 'translateY(12px)';
+  requestAnimationFrame(() => {
+    scene.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+    scene.style.opacity = '1'; scene.style.transform = 'translateY(0)';
+    setTimeout(() => { scene.style.transition = ''; }, 300);
+  });
+}
+
+function flipCard() { isFlipped = !isFlipped; document.getElementById('cardScene').classList.toggle('flipped', isFlipped); }
+function nextCard() { if (currentIdx >= currentCards.length - 1) { finishStudy(); return; } currentIdx++; showCard(); }
+function prevCard() { if (currentIdx <= 0) return; currentIdx--; showCard(); }
+
+function finishStudy() {
+  document.getElementById('flashcardArea').classList.remove('active');
+  document.getElementById('finishScreen').classList.add('active');
+  document.getElementById('finishDeckName').textContent = `«${decks[selectedDeckIdx].name}» — ${currentCards.length} слов пройдено`;
+  document.getElementById('progressFill').style.width = '100%';
+}
+
+function restartStudy() { document.getElementById('finishScreen').classList.remove('active'); startStudy(); }
+
+function backToDecks() {
+  document.getElementById('finishScreen').classList.remove('active');
+  document.getElementById('flashcardArea').classList.remove('active');
+  document.getElementById('deckSelector').style.display = '';
+  selectedDeckIdx = null; renderDeckList();
+}
+
+loadDecks();
+renderDeckList();
+</script>
+</body>
+</html>
