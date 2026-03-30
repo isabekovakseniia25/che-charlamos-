@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>che, charlamos? — учитель</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --blue: #4A7FE8;
+    --blue-dark: #2F60CC;
+    --yellow: #F9CF5A;
+    --white: #ffffff;
+    --offwhite: #F4F2FF;
+    --charcoal: #1A1A2E;
+    --mid: #6B6B8A;
+    --light: #B0AECF;
+    --border: #E2DEFF;
+  }
+
+  body {
+    font-family: 'Nunito Sans', sans-serif;
+    background: #ffffff;
+    color: var(--charcoal);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+
+  /* NAV */
+  nav {
+    position: relative; z-index: 10;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 32px;
+    background: var(--white);
+    border-bottom: 2px solid var(--border);
+    box-shadow: 0 2px 16px rgba(74,127,232,0.07);
+  }
+  .nav-logo {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900; font-size: 16px;
+    color: var(--charcoal);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .nav-logo-badge {
+    background: var(--blue); color: white;
+    padding: 4px 12px; border-radius: 100px;
+    font-size: 14px; font-weight: 900;
+  }
+  .nav-logo-sub { color: var(--light); font-weight: 600; font-size: 13px; }
+  .nav-tabs { display: flex; gap: 6px; }
+  .nav-tab {
+    padding: 8px 20px; border-radius: 100px;
+    border: 2px solid transparent; cursor: pointer;
+    font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 800;
+    transition: all 0.2s; background: transparent; color: var(--mid);
+  }
+  .nav-tab:hover { color: var(--blue); border-color: var(--border); }
+  .nav-tab.active { background: var(--blue); color: white; border-color: var(--blue-dark); border-width: 3px; }
+
+  /* PAGES */
+  .page { display: none; position: relative; z-index: 1; }
+  .page.active { display: block; }
+
+  /* STUDENT */
+  .student-page { max-width: 600px; margin: 0 auto; padding: 48px 24px 80px; }
+
+  .page-title {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900; font-size: 30px; margin-bottom: 4px;
+  }
+  .page-subtitle { color: var(--mid); font-size: 15px; margin-bottom: 28px; }
+
+  .deck-list { display: flex; flex-direction: column; gap: 10px; }
+  .deck-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px; border-radius: 16px;
+    background: var(--white); border: 3px solid var(--border);
+    cursor: pointer; transition: all 0.2s;
+  }
+  .deck-item:hover { border-color: var(--blue); transform: translateX(5px); }
+  .deck-item.selected { border-color: var(--blue); background: rgba(74,127,232,0.05); transform: translateX(5px); }
+  .deck-item-left { display: flex; align-items: center; gap: 12px; }
+  .deck-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--border); flex-shrink: 0; transition: background 0.2s; }
+  .deck-item.selected .deck-dot { background: var(--blue); }
+  .deck-item-name { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 15px; }
+  .deck-item-count { font-size: 12px; color: var(--light); background: var(--offwhite); padding: 3px 10px; border-radius: 100px; font-weight: 700; }
+
+  .btn-start {
+    width: 100%; padding: 16px; border-radius: 16px; border: none;
+    background: var(--blue); color: white;
+    font-family: 'Nunito', sans-serif; font-size: 17px; font-weight: 900;
+    cursor: pointer; transition: all 0.2s; margin-top: 20px;
+    box-shadow: 0 6px 20px rgba(74,127,232,0.35);
+    border: 3px solid var(--blue-dark);
+  }
+  .btn-start:hover { background: var(--blue-dark); transform: translateY(-2px); }
+  .btn-start:disabled { background: var(--border); color: var(--light); cursor: not-allowed; transform: none; box-shadow: none; }
+
+  /* FLASHCARD */
+  .flashcard-area { display: none; }
+  .flashcard-area.active { display: block; }
+
+  .progress-bar-wrap { height: 6px; background: var(--border); border-radius: 6px; margin-bottom: 32px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--blue), #9B6FD8); border-radius: 6px; transition: width 0.4s ease; }
+
+  .card-counter { text-align: center; font-size: 13px; color: var(--light); margin-bottom: 16px; font-weight: 700; font-family: 'Nunito', sans-serif; letter-spacing: 1px; }
+
+  /* CARD — opacity/translate swap (no 3D transform to avoid rendering bugs) */
+  .card-scene { width: 100%; height: 260px; cursor: pointer; margin-bottom: 28px; position: relative; }
+
+  .card-face {
+    position: absolute; inset: 0;
+    border-radius: 24px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 40px 32px;
+    transition: opacity 0.28s ease, transform 0.28s ease;
+  }
+
+  .card-front {
+    background: var(--white);
+    border: 2px solid var(--border);
+    box-shadow: 0 8px 32px rgba(74,127,232,0.1);
+    opacity: 1; transform: translateY(0); z-index: 2;
+  }
+  .card-back {
+    background: var(--blue);
+    box-shadow: 0 8px 32px rgba(74,127,232,0.4);
+    opacity: 0; transform: translateY(14px); z-index: 1;
+  }
+
+  .card-scene.flipped .card-front { opacity: 0; transform: translateY(-14px); z-index: 1; }
+  .card-scene.flipped .card-back  { opacity: 1; transform: translateY(0);     z-index: 2; }
+
+  /* yellow blobs on card */
+  .card-front::before {
+    content: '';
+    position: absolute; top: -12px; right: 22px;
+    width: 26px; height: 26px;
+    background: var(--yellow); border-radius: 50% 50% 50% 10%;
+    transform: rotate(-20deg);
+  }
+  .card-back::after {
+    content: '';
+    position: absolute; bottom: -10px; left: 26px;
+    width: 22px; height: 22px;
+    background: var(--yellow); border-radius: 50% 10% 50% 50%;
+    transform: rotate(15deg);
+  }
+
+  .card-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; font-weight: 800; font-family: 'Nunito', sans-serif; }
+  .card-front .card-label { color: var(--light); }
+  .card-back .card-label { color: rgba(255,255,255,0.6); }
+
+  .card-word { font-family: 'Nunito', sans-serif; font-weight: 900; text-align: center; line-height: 1.15; font-size: 44px; }
+  .card-front .card-word { color: var(--charcoal); }
+  .card-back .card-word { color: white; font-size: 40px; }
+
+  .card-hint { margin-top: 12px; font-size: 13px; color: rgba(255,255,255,0.5); text-align: center; }
+
+  .card-tap-hint { position: absolute; bottom: 18px; font-size: 12px; font-weight: 700; font-family: 'Nunito', sans-serif; letter-spacing: 0.5px; }
+  .card-front .card-tap-hint { color: var(--light); }
+  .card-back .card-tap-hint  { color: rgba(255,255,255,0.4); }
+
+  .card-nav { display: flex; gap: 12px; }
+  .btn-nav {
+    flex: 1; padding: 14px 20px; border-radius: 14px;
+    border: 3px solid var(--blue); background: var(--white);
+    font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 800;
+    color: var(--blue); cursor: pointer; transition: all 0.2s;
+  }
+  .btn-nav:hover { background: var(--blue); color: white; }
+  .btn-nav.primary { background: var(--charcoal); border-color: var(--charcoal); color: white; box-shadow: 0 4px 14px rgba(26,26,46,0.2); }
+  .btn-nav.primary:hover { background: var(--blue); border-color: var(--blue); }
+
+  .finish-screen { display: none; text-align: center; padding: 60px 20px; }
+  .finish-screen.active { display: block; }
+  .finish-emoji { font-size: 64px; margin-bottom: 16px; }
+  .finish-screen h3 { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 28px; margin-bottom: 8px; }
+  .finish-screen p { color: var(--mid); margin-bottom: 32px; font-size: 15px; }
+  .btn-restart {
+    padding: 14px 36px; border-radius: 14px;
+    background: var(--blue); color: white; border: none;
+    font-family: 'Nunito', sans-serif; font-size: 16px; font-weight: 900;
+    cursor: pointer; transition: all 0.2s; box-shadow: 0 6px 20px rgba(74,127,232,0.35);
+  }
+  .btn-restart:hover { background: var(--blue-dark); }
+
+  /* TEACHER */
+  .teacher-page { max-width: 720px; margin: 0 auto; padding: 48px 24px 80px; }
+
+  .section-card { background: var(--white); border-radius: 20px; border: 3px solid var(--border); padding: 28px; margin-bottom: 20px; }
+  .section-title { font-family: 'Nunito', sans-serif; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--light); font-weight: 800; margin-bottom: 20px; }
+
+  .deck-name-row { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 20px; flex-wrap: wrap; }
+  .field-group { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 150px; }
+  .field-group label { font-size: 12px; color: var(--mid); font-weight: 700; font-family: 'Nunito', sans-serif; }
+  .field-group input {
+    padding: 11px 14px; border-radius: 10px;
+    border: 2px solid var(--border); background: #ffffff;
+    font-family: 'Nunito Sans', sans-serif; font-size: 14px; color: var(--charcoal);
+    outline: none; transition: border-color 0.2s;
+  }
+  .field-group input:focus { border-color: var(--blue); background: white; }
+
+  .word-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+  .word-row input { flex: 1; }
+  .btn-remove-row {
+    width: 36px; height: 36px; border-radius: 8px;
+    border: 2px solid var(--border); background: #ffffff;
+    cursor: pointer; font-size: 18px; color: var(--mid);
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; flex-shrink: 0; line-height: 1;
+  }
+  .btn-remove-row:hover { border-color: #E05; color: #E05; }
+
+  .words-container { margin-bottom: 14px; }
+  .btn-add-word-wrap { margin-bottom: 16px; }
+  .btn-add-word-inline {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: 10px;
+    border: 2px dashed var(--border); background: transparent;
+    font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 800;
+    color: var(--mid); cursor: pointer; transition: all 0.2s;
+  }
+  .btn-add-word-inline:hover { border-color: var(--blue); color: var(--blue); }
+
+  .btn-save-deck {
+    width: 100%; padding: 13px; border-radius: 12px; border: none;
+    background: var(--blue); color: white;
+    font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 900;
+    cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 14px rgba(74,127,232,0.3);
+    border: 3px solid var(--blue-dark);
+  }
+  .btn-save-deck:hover { background: var(--blue-dark); }
+  .btn-save-deck:disabled { background: var(--border); color: var(--light); cursor: not-allowed; box-shadow: none; }
+
+  .drop-zone {
+    border: 2.5px dashed var(--border); border-radius: 14px;
+    padding: 36px 20px; text-align: center;
+    cursor: pointer; transition: all 0.2s; margin-bottom: 18px;
+  }
+  .drop-zone:hover, .drop-zone.dragover { border-color: var(--blue); background: rgba(74,127,232,0.04); }
+  .drop-zone-icon { font-size: 32px; margin-bottom: 10px; }
+  .drop-zone p { color: var(--mid); font-size: 14px; line-height: 1.7; }
+  .drop-zone strong { color: var(--blue); }
+  #csvFileInput { display: none; }
+
+  .csv-preview { display: none; background: rgba(74,127,232,0.06); border: 1.5px solid rgba(74,127,232,0.2); border-radius: 10px; padding: 12px 16px; margin-bottom: 14px; font-size: 13px; color: var(--mid); }
+  .csv-preview.visible { display: block; }
+
+  .existing-deck {
+    background: var(--white); border-radius: 14px; border: 2px solid var(--border);
+    padding: 16px 20px; margin-bottom: 10px;
+    display: flex; align-items: center; justify-content: space-between; transition: border-color 0.2s;
+  }
+  .existing-deck:hover { border-color: rgba(74,127,232,0.3); }
+  .existing-deck-name { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 15px; margin-bottom: 2px; }
+  .existing-deck-meta { font-size: 13px; color: var(--light); }
+  .btn-delete-deck {
+    padding: 6px 14px; border-radius: 8px; border: 2px solid var(--border); background: transparent;
+    font-size: 13px; color: var(--light); cursor: pointer;
+    font-family: 'Nunito', sans-serif; font-weight: 700; transition: all 0.2s;
+  }
+  .btn-delete-deck:hover { border-color: #E05; color: #E05; }
+
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--light); font-size: 14px; font-weight: 600; }
+
+  .toast {
+    position: fixed; bottom: 28px; left: 50%;
+    transform: translateX(-50%) translateY(16px);
+    background: var(--charcoal); color: white;
+    padding: 12px 24px; border-radius: 100px;
+    font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 700;
+    opacity: 0; transition: all 0.3s; z-index: 999; white-space: nowrap;
+    box-shadow: 0 8px 24px rgba(26,26,46,0.25);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 500px) {
+    nav { padding: 14px 16px; }
+    .nav-logo-sub { display: none; }
+    .student-page, .teacher-page { padding: 32px 16px 60px; }
+    .card-word { font-size: 30px !important; }
+    .card-scene { height: 220px; }
+  }
+
+  /* ── EDIT MODAL ── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 100;
+    background: rgba(26,26,46,0.5); backdrop-filter: blur(4px);
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-overlay.active { display: flex; }
+  .modal {
+    background: var(--white); border-radius: 24px;
+    border: 3px solid var(--border);
+    width: 100%; max-width: 600px; max-height: 90vh;
+    display: flex; flex-direction: column;
+    box-shadow: 0 24px 60px rgba(26,26,46,0.2);
+  }
+  .modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 22px 28px; border-bottom: 2px solid var(--border);
+    flex-shrink: 0;
+  }
+  .modal-title { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 18px; }
+  .modal-close {
+    width: 36px; height: 36px; border-radius: 50%;
+    border: 2px solid var(--border); background: var(--offwhite);
+    font-size: 18px; cursor: pointer; color: var(--mid);
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; font-weight: 700; line-height: 1;
+  }
+  .modal-close:hover { border-color: #E05; color: #E05; }
+  .modal-body { padding: 24px 28px; overflow-y: auto; flex: 1; }
+  .modal-deck-name-wrap { margin-bottom: 20px; }
+  .modal-deck-name-wrap label { font-size: 12px; color: var(--mid); font-weight: 700; font-family: 'Nunito', sans-serif; display: block; margin-bottom: 6px; }
+  .modal-deck-name-wrap input {
+    width: 100%; padding: 11px 14px; border-radius: 10px;
+    border: 2px solid var(--border); background: var(--offwhite);
+    font-family: 'Nunito Sans', sans-serif; font-size: 15px; font-weight: 700; color: var(--charcoal);
+    outline: none; transition: border-color 0.2s;
+  }
+  .modal-deck-name-wrap input:focus { border-color: var(--blue); background: white; }
+  .modal-words { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .modal-word-row { display: flex; gap: 8px; align-items: center; }
+  .modal-word-row input {
+    flex: 1; padding: 10px 12px; border-radius: 10px;
+    border: 2px solid var(--border); background: var(--offwhite);
+    font-family: 'Nunito Sans', sans-serif; font-size: 14px; color: var(--charcoal);
+    outline: none; transition: border-color 0.2s;
+  }
+  .modal-word-row input:focus { border-color: var(--blue); background: white; }
+  .modal-word-num {
+    width: 24px; text-align: right; font-size: 12px; color: var(--light);
+    font-weight: 700; flex-shrink: 0; font-family: 'Nunito', sans-serif;
+  }
+  .modal-footer {
+    padding: 18px 28px; border-top: 2px solid var(--border);
+    display: flex; gap: 10px; flex-shrink: 0;
+  }
+  .btn-modal-save {
+    flex: 1; padding: 13px; border-radius: 12px;
+    background: var(--blue); color: white; border: 3px solid var(--blue-dark);
+    font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 900;
+    cursor: pointer; transition: all 0.2s;
+    box-shadow: 0 4px 14px rgba(74,127,232,0.3);
+  }
+  .btn-modal-save:hover { background: var(--blue-dark); }
+  .btn-modal-cancel {
+    padding: 13px 20px; border-radius: 12px;
+    background: white; color: var(--mid); border: 3px solid var(--border);
+    font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 800;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-modal-cancel:hover { border-color: var(--mid); color: var(--charcoal); }
+  .btn-edit-deck {
+    padding: 6px 14px; border-radius: 8px; border: 2px solid var(--blue);
+    background: transparent; font-size: 13px; color: var(--blue); cursor: pointer;
+    font-family: 'Nunito', sans-serif; font-weight: 700; transition: all 0.2s;
+    margin-right: 6px;
+  }
+  .btn-edit-deck:hover { background: var(--blue); color: white; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">
+    <span class="nav-logo-badge">che,</span>
+    charlamos?
+    <span class="nav-logo-sub">· учитель</span>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="switchPage('student', this)">Учиться</button>
+    <button class="nav-tab" onclick="switchPage('teacher', this)">Учитель</button>
+  </div>
+</nav>
+<div style="background:#FFF8E1;border-bottom:2px solid #F9CF5A;padding:8px 32px;font-family:Nunito,sans-serif;font-size:13px;font-weight:800;color:#B8860B;text-align:center;letter-spacing:0.5px;">🔑 ПАНЕЛЬ УЧИТЕЛЯ — не отправляй эту ссылку ученикам</div>
+
+<!-- STUDENT -->
+<div id="page-student" class="page active">
+  <div class="student-page">
+
+    <div id="deckSelector">
+      <h2 class="page-title">Слова с charlas 💙</h2>
+      <p class="page-subtitle">Выбери набор и переворачивай карточки, чтобы увидеть перевод</p>
+      <div id="deckList" class="deck-list"></div>
+      <button class="btn-start" id="btnStart" onclick="startStudy()" disabled>¡Vamos! →</button>
+    </div>
+
+    <div id="flashcardArea" class="flashcard-area">
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
+      </div>
+      <div class="card-counter" id="cardCounter">1 / 1</div>
+
+      <div class="card-scene" id="cardScene" onclick="flipCard()">
+        <div class="card-face card-front">
+          <div class="card-label">Испанский</div>
+          <div class="card-word" id="wordFront">—</div>
+          <div class="card-tap-hint">нажми, чтобы увидеть перевод</div>
+        </div>
+        <div class="card-face card-back">
+          <div class="card-label">Русский</div>
+          <div class="card-word" id="wordBack">—</div>
+          <div id="wordHint" class="card-hint"></div>
+          <div class="card-tap-hint">нажми ещё раз</div>
+        </div>
+      </div>
+
+      <div class="card-nav">
+        <button class="btn-nav" onclick="prevCard()">← Назад</button>
+        <button class="btn-nav primary" id="btnNext" onclick="nextCard()">Дальше →</button>
+      </div>
+    </div>
+
+    <div id="finishScreen" class="finish-screen">
+      <div class="finish-emoji">🎉</div>
+      <h3>¡Perfecto!</h3>
+      <p id="finishDeckName"></p>
+      <button class="btn-restart" onclick="restartStudy()">Повторить ещё раз</button>
+      <br><br>
+      <button class="btn-nav" style="display:inline-block;max-width:220px;margin:0 auto;" onclick="backToDecks()">← К наборам</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- TEACHER -->
+<div id="page-teacher" class="page">
+  <div class="teacher-page">
+
+    <h2 class="page-title" style="margin-bottom:4px;">Панель учителя 🖊️</h2>
+    <p class="page-subtitle" style="margin-bottom:28px;">Создавай наборы слов для учеников</p>
+
+    <div class="section-card">
+      <div class="section-title">Добавить вручную</div>
+      <div class="deck-name-row">
+        <div class="field-group">
+          <label>Название набора</label>
+          <input type="text" id="deckNameInput" placeholder="Например: Charla 4 — Gustos">
+        </div>
+      </div>
+      <div class="words-container" id="wordsContainer">
+        <div class="word-row">
+          <input type="text" placeholder="Испанское слово" class="es-input">
+          <input type="text" placeholder="Перевод на русский" class="ru-input">
+          <button class="btn-remove-row" onclick="removeRow(this)">×</button>
+        </div>
+      </div>
+      <div class="btn-add-word-wrap">
+        <button class="btn-add-word-inline" onclick="addRow()">+ Добавить слово</button>
+      </div>
+      <button class="btn-save-deck" onclick="saveDeckManual()">Сохранить набор</button>
+    </div>
+
+    <div class="section-card">
+      <div class="section-title">Загрузить CSV файл</div>
+      <div class="drop-zone" id="dropZone" onclick="document.getElementById('csvFileInput').click()">
+        <div class="drop-zone-icon">📂</div>
+        <p>Перетащи файл сюда или <strong>нажми для выбора</strong><br>
+        Формат: <code>gustar, нравиться</code> — по одной паре в строке</p>
+      </div>
+      <input type="file" id="csvFileInput" accept=".csv,.txt" onchange="handleCSV(event)">
+      <div class="csv-preview" id="csvPreview"></div>
+      <div class="deck-name-row">
+        <div class="field-group">
+          <label>Название набора</label>
+          <input type="text" id="csvDeckName" placeholder="Название">
+        </div>
+      </div>
+      <button class="btn-save-deck" id="btnSaveCSV" onclick="saveCSVDeck()" disabled>Сохранить набор из файла</button>
+    </div>
+
+    <div class="section-title" style="margin-top:8px;">Сохранённые наборы</div>
+    <div id="existingDecks"></div>
+
+  </div>
+</div>
+
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Редактировать набор</div>
+      <button class="modal-close" onclick="closeEditModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-deck-name-wrap">
+        <label>Название набора</label>
+        <input type="text" id="modalDeckName" placeholder="Название">
+      </div>
+      <div class="modal-words" id="modalWords"></div>
+      <button class="btn-add-word-inline" onclick="modalAddRow()">+ Добавить слово</button>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" onclick="closeEditModal()">Отмена</button>
+      <button class="btn-modal-save" onclick="saveEditModal()">Сохранить изменения</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+let decks = [], selectedDeckIdx = null, currentCards = [], currentIdx = 0, isFlipped = false, csvParsed = [];
+
+function saveDecks() { try { localStorage.setItem('charlamos_decks', JSON.stringify(decks)); } catch(e) {} }
+function loadDecks() {
+  try { const d = localStorage.getItem('charlamos_decks'); if (d) decks = JSON.parse(d); } catch(e) { decks = []; }
+  const builtIn = [
+    { name: 'Charla 4 — Gustos', cards: [
+      { es: 'gustar', ru: 'нравиться' }, { es: 'me gusta', ru: 'мне нравится' },
+      { es: 'me gustan', ru: 'мне нравятся (мн.ч.)' }, { es: 'leer', ru: 'читать' },
+      { es: 'bailar', ru: 'танцевать' }, { es: 'descansar', ru: 'отдыхать' },
+      { es: 'escuchar música', ru: 'слушать музыку' }, { es: 'pasear', ru: 'гулять' },
+    ]},
+    { name: 'Charla 6 — Shakira! Shakira!', cards: [
+      { es: 'salí pa\' despejarme', ru: 'я вышла, чтобы отвлечься' },
+      { es: 'estar apagado/a', ru: 'быть вялым / уставшим' },
+      { es: 'no tener nada que perder', ru: 'нечего терять' },
+      { es: 'tener derecho de', ru: 'иметь право на что-то' },
+      { es: 'portarse mal', ru: 'вести себя плохо' },
+      { es: 'pa\' pasarla bien', ru: 'чтобы хорошо провести время' },
+      { es: 'estar suelto/a', ru: 'быть свободным / свободной' },
+      { es: 'ahora puedo hacer lo que quiera', ru: 'сейчас я могу делать то, что хочу' },
+      { es: 'nadie va decirme cómo comportarme', ru: 'никто не скажет мне, как себя вести' },
+      { es: 'ponerse poca ropa', ru: 'надеть мало одежды' },
+      { es: 'pasarse rico', ru: 'приятно / хорошо провести время' },
+    ]}
+  ];
+  const teacherDecks = decks.filter(d => !builtIn.some(b => b.name === d.name));
+  decks = [...builtIn, ...teacherDecks];
+}
+
+function switchPage(name, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'student') renderDeckList();
+  if (name === 'teacher') renderExistingDecks();
+}
+
+function renderDeckList() {
+  const list = document.getElementById('deckList');
+  if (!decks.length) {
+    list.innerHTML = '<div class="empty-state">Наборов пока нет — добавь в панели учителя</div>';
+    document.getElementById('btnStart').disabled = true; return;
+  }
+  list.innerHTML = decks.map((d, i) => `
+    <div class="deck-item ${selectedDeckIdx===i?'selected':''}" onclick="selectDeck(${i})">
+      <div class="deck-item-left"><div class="deck-dot"></div><span class="deck-item-name">${d.name}</span></div>
+      <span class="deck-item-count">${d.cards.length} слов</span>
+    </div>`).join('');
+  document.getElementById('btnStart').disabled = selectedDeckIdx === null;
+}
+
+function selectDeck(i) { selectedDeckIdx = i; renderDeckList(); }
+
+function startStudy() {
+  if (selectedDeckIdx === null) return;
+  currentCards = [...decks[selectedDeckIdx].cards];
+  currentIdx = 0; isFlipped = false;
+  document.getElementById('deckSelector').style.display = 'none';
+  document.getElementById('finishScreen').classList.remove('active');
+  document.getElementById('flashcardArea').classList.add('active');
+  showCard();
+}
+
+function showCard() {
+  const card = currentCards[currentIdx], total = currentCards.length;
+  document.getElementById('wordFront').textContent = card.es;
+  document.getElementById('wordBack').textContent = card.ru;
+  document.getElementById('wordHint').textContent = card.hint || '';
+  document.getElementById('cardCounter').textContent = `${currentIdx + 1} / ${total}`;
+  document.getElementById('progressFill').style.width = `${(currentIdx / total) * 100}%`;
+  document.getElementById('btnNext').textContent = currentIdx === total - 1 ? '¡Listo! ✓' : 'Дальше →';
+  const scene = document.getElementById('cardScene');
+  scene.classList.remove('flipped');
+  isFlipped = false;
+  scene.style.opacity = '0'; scene.style.transform = 'translateY(12px)';
+  requestAnimationFrame(() => {
+    scene.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+    scene.style.opacity = '1'; scene.style.transform = 'translateY(0)';
+    setTimeout(() => { scene.style.transition = ''; }, 300);
+  });
+}
+
+function flipCard() {
+  isFlipped = !isFlipped;
+  document.getElementById('cardScene').classList.toggle('flipped', isFlipped);
+}
+
+function nextCard() { if (currentIdx >= currentCards.length - 1) { finishStudy(); return; } currentIdx++; showCard(); }
+function prevCard() { if (currentIdx <= 0) return; currentIdx--; showCard(); }
+
+function finishStudy() {
+  document.getElementById('flashcardArea').classList.remove('active');
+  document.getElementById('finishScreen').classList.add('active');
+  document.getElementById('finishDeckName').textContent = `«${decks[selectedDeckIdx].name}» — ${currentCards.length} слов пройдено`;
+  document.getElementById('progressFill').style.width = '100%';
+}
+
+function restartStudy() { document.getElementById('finishScreen').classList.remove('active'); startStudy(); }
+
+function backToDecks() {
+  document.getElementById('finishScreen').classList.remove('active');
+  document.getElementById('flashcardArea').classList.remove('active');
+  document.getElementById('deckSelector').style.display = '';
+  selectedDeckIdx = null; renderDeckList();
+}
+
+function addRow() {
+  const c = document.getElementById('wordsContainer');
+  const row = document.createElement('div'); row.className = 'word-row';
+  row.innerHTML = `<input type="text" placeholder="Испанское слово" class="es-input"><input type="text" placeholder="Перевод на русский" class="ru-input"><button class="btn-remove-row" onclick="removeRow(this)">×</button>`;
+  c.appendChild(row); row.querySelector('.es-input').focus();
+}
+
+function removeRow(btn) { const rows = document.querySelectorAll('#wordsContainer .word-row'); if (rows.length <= 1) return; btn.parentElement.remove(); }
+
+function saveDeckManual() {
+  const name = document.getElementById('deckNameInput').value.trim();
+  if (!name) { showToast('Введи название набора'); return; }
+  const cards = [];
+  document.querySelectorAll('#wordsContainer .word-row').forEach(row => {
+    const es = row.querySelector('.es-input').value.trim(), ru = row.querySelector('.ru-input').value.trim();
+    if (es && ru) cards.push({ es, ru });
+  });
+  if (!cards.length) { showToast('Добавь хотя бы одно слово'); return; }
+  decks.push({ name, cards }); saveDecks();
+  showToast(`✓ Набор «${name}» сохранён (${cards.length} слов)`);
+  document.getElementById('deckNameInput').value = '';
+  document.getElementById('wordsContainer').innerHTML = `<div class="word-row"><input type="text" placeholder="Испанское слово" class="es-input"><input type="text" placeholder="Перевод на русский" class="ru-input"><button class="btn-remove-row" onclick="removeRow(this)">×</button></div>`;
+  renderExistingDecks();
+}
+
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('dragover'); const f = e.dataTransfer.files[0]; if (f) parseCSVFile(f); });
+
+function handleCSV(e) { const f = e.target.files[0]; if (f) parseCSVFile(f); }
+
+function parseCSVFile(file) {
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const lines = ev.target.result.split(/\r?\n/).filter(l => l.trim());
+    csvParsed = [];
+    lines.forEach(line => { const p = line.split(','); if (p.length >= 2) { const es = p[0].trim(), ru = p.slice(1).join(',').trim(); if (es && ru) csvParsed.push({ es, ru }); } });
+    const prev = document.getElementById('csvPreview'); prev.className = 'csv-preview visible';
+    if (csvParsed.length) {
+      prev.textContent = `✓ Найдено ${csvParsed.length} слов: ${csvParsed.slice(0,3).map(c=>`${c.es} → ${c.ru}`).join(', ')}${csvParsed.length>3?'…':''}`;
+      document.getElementById('btnSaveCSV').disabled = false;
+      document.getElementById('csvDeckName').value = file.name.replace(/\.[^.]+$/, '');
+    } else {
+      prev.textContent = '⚠ Не удалось распознать. Формат: испанское,русское — по строке';
+      document.getElementById('btnSaveCSV').disabled = true;
+    }
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function saveCSVDeck() {
+  if (!csvParsed.length) return;
+  const name = document.getElementById('csvDeckName').value.trim() || 'Набор из файла';
+  decks.push({ name, cards: csvParsed }); saveDecks();
+  showToast(`✓ Набор «${name}» сохранён (${csvParsed.length} слов)`);
+  csvParsed = []; document.getElementById('csvPreview').className = 'csv-preview';
+  document.getElementById('csvDeckName').value = ''; document.getElementById('btnSaveCSV').disabled = true;
+  document.getElementById('csvFileInput').value = ''; renderExistingDecks();
+}
+
+function renderExistingDecks() {
+  const el = document.getElementById('existingDecks');
+  if (!decks.length) { el.innerHTML = '<div class="empty-state">Наборов пока нет</div>'; return; }
+  el.innerHTML = decks.map((d, i) => `
+    <div class="existing-deck">
+      <div style="flex:1;min-width:0;">
+        <div class="existing-deck-name">${d.name}</div>
+        <div class="existing-deck-meta">${d.cards.length} слов · ${d.cards.slice(0,3).map(c=>c.es).join(', ')}${d.cards.length>3?'…':''}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0;">
+        <button class="btn-edit-deck" onclick="openEditModal(${i})">✏️ Изменить</button>
+        <button class="btn-delete-deck" onclick="deleteDeck(${i})">Удалить</button>
+      </div>
+    </div>`).join('');
+}
+
+function deleteDeck(i) { const name = decks[i].name; decks.splice(i, 1); saveDecks(); showToast(`Набор «${name}» удалён`); renderExistingDecks(); if (selectedDeckIdx === i) selectedDeckIdx = null; }
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+
+let editingDeckIdx = null;
+
+function openEditModal(i) {
+  editingDeckIdx = i;
+  const deck = decks[i];
+  document.getElementById('modalDeckName').value = deck.name;
+  document.getElementById('modalTitle').textContent = 'Редактировать: ' + deck.name;
+  const container = document.getElementById('modalWords');
+  container.innerHTML = deck.cards.map((c, j) => `
+    <div class="modal-word-row">
+      <span class="modal-word-num">${j+1}</span>
+      <input type="text" class="modal-es" value="${c.es.replace(/"/g,'&quot;')}" placeholder="Испанский">
+      <input type="text" class="modal-ru" value="${c.ru.replace(/"/g,'&quot;')}" placeholder="Русский">
+      <button class="btn-remove-row" onclick="this.parentElement.remove(); renumberModal()">×</button>
+    </div>`).join('');
+  document.getElementById('editModal').classList.add('active');
+}
+
+function renumberModal() {
+  document.querySelectorAll('#modalWords .modal-word-num').forEach((el, i) => el.textContent = i + 1);
+}
+
+function modalAddRow() {
+  const container = document.getElementById('modalWords');
+  const num = container.querySelectorAll('.modal-word-row').length + 1;
+  const row = document.createElement('div');
+  row.className = 'modal-word-row';
+  row.innerHTML = `<span class="modal-word-num">${num}</span><input type="text" class="modal-es" placeholder="Испанский"><input type="text" class="modal-ru" placeholder="Русский"><button class="btn-remove-row" onclick="this.parentElement.remove(); renumberModal()">×</button>`;
+  container.appendChild(row);
+  row.querySelector('.modal-es').focus();
+}
+
+function closeEditModal() {
+  document.getElementById('editModal').classList.remove('active');
+  editingDeckIdx = null;
+}
+
+function saveEditModal() {
+  const name = document.getElementById('modalDeckName').value.trim();
+  if (!name) { showToast('Введи название набора'); return; }
+  const cards = [];
+  document.querySelectorAll('#modalWords .modal-word-row').forEach(row => {
+    const es = row.querySelector('.modal-es').value.trim();
+    const ru = row.querySelector('.modal-ru').value.trim();
+    if (es && ru) cards.push({ es, ru });
+  });
+  if (!cards.length) { showToast('Добавь хотя бы одно слово'); return; }
+  decks[editingDeckIdx] = { name, cards };
+  saveDecks();
+  showToast(`✓ Набор «${name}» обновлён (${cards.length} слов)`);
+  closeEditModal();
+  renderExistingDecks();
+}
+
+// Close modal on overlay click
+document.getElementById('editModal').addEventListener('click', function(e) {
+  if (e.target === this) closeEditModal();
+});
+
+loadDecks(); renderDeckList();
+</script>
+</body>
+</html>
